@@ -28,7 +28,6 @@ const queries = {
   `.trim()
 };
 
-
 export default class Neo4jClient {
   constructor(url, username, password) {
     this.url = url;
@@ -37,32 +36,29 @@ export default class Neo4jClient {
   }
 
   send(endpoint, method, data) {
-    return fetch(
-      this.url + endpoint,
-      {
-        body: JSON.stringify(data), // must match 'Content-Type' header
-        cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-        credentials: 'same-origin', // include, same-origin, *omit
-        headers: {
-          'authorization': 'Basic ' + btoa(this.username + ':' + this.password),
-          // 'user-agent': 'Mozilla/4.0 MDN Example',
-          'accept': 'application/json',
-          'content-type': 'application/json; charset=utf-8'
-        },
-        method: method//,
-        // mode: 'cors', // no-cors, cors, *same-origin
-        // redirect: 'follow', // manual, *follow, error
-        // referrer: 'no-referrer', // *client, no-referrer
-      }
-    ).then((response) => {
-      return new Promise((resolve) => {
+    return fetch(this.url + endpoint, {
+      body: JSON.stringify(data), // must match 'Content-Type' header
+      cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: "same-origin", // include, same-origin, *omit
+      headers: {
+        authorization: "Basic " + btoa(this.username + ":" + this.password),
+        // 'user-agent': 'Mozilla/4.0 MDN Example',
+        accept: "application/json",
+        "content-type": "application/json; charset=utf-8"
+      },
+      method: method //,
+      // mode: 'cors', // no-cors, cors, *same-origin
+      // redirect: 'follow', // manual, *follow, error
+      // referrer: 'no-referrer', // *client, no-referrer
+    }).then(response => {
+      return new Promise(resolve => {
         resolve(response.json());
       });
     });
   }
 
   commit(cypher) {
-    const endpoint = '/db/data/transaction/commit';
+    const endpoint = "/db/data/transaction/commit";
     const data = {
       statements: [
         {
@@ -72,13 +68,14 @@ export default class Neo4jClient {
         }
       ]
     };
-    return this.send(endpoint, 'POST', data);
+    return this.send(endpoint, "POST", data);
   }
 
   tally(response) {
     // Assumption: single query
     let data = response.results[0].data;
-    let nodes = [], links = [];
+    let nodes = [],
+      links = [];
     for (let i = 0; i < data.length; i++) {
       nodes = this.concatById(nodes, data[i].graph.nodes);
       links = this.concatById(links, data[i].graph.relationships);
@@ -96,22 +93,26 @@ export default class Neo4jClient {
   }
 
   renameProperty(object, oldName, newName) {
-    delete Object.assign(object, {[newName]: object[oldName] })[oldName];
+    delete Object.assign(object, { [newName]: object[oldName] })[oldName];
   }
 
   concatById(target, source) {
-    return target.concat(source.filter((candidate) => {
-      return target.findIndex(item => item.id === candidate.id) < 0;
-    }));
+    return target.concat(
+      source.filter(candidate => {
+        return target.findIndex(item => item.id === candidate.id) < 0;
+      })
+    );
   }
 
   refreshDB() {
-    Promise.resolve().
-      then(this.commit(queries.deleteDependencies)).
-      then(this.commit(queries.createDependencies)).
-      then(this.commit(queries.updateAfferent)).
-      then(this.commit(queries.updateEfferent)).
-      then(this.commit(queries.updateNodes)).
-      then(() => { console.log("Done!"); });
+    Promise.resolve()
+      .then(this.commit(queries.deleteDependencies))
+      .then(this.commit(queries.createDependencies))
+      .then(this.commit(queries.updateAfferent))
+      .then(this.commit(queries.updateEfferent))
+      .then(this.commit(queries.updateNodes))
+      .then(() => {
+        console.log("Done!");
+      });
   }
 }

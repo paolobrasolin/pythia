@@ -1,5 +1,6 @@
 module.exports = {
-  extends: ["eslint:recommended"],
+  extends: ["eslint:recommended", "prettier"],
+  plugins: ['prettier'],
   env: {
     es6: true,
     browser: true
@@ -11,6 +12,7 @@ module.exports = {
   // globals: {
   // },
   rules: {
+    'prettier/prettier': "error",
     "no-console": 0 // TODO: remove once stabler
   },
   overrides: [

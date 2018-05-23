@@ -38,12 +38,11 @@ module.exports = {
       test: /\.js$/,
       exclude: /node_modules/,
       use: 'eslint-loader'
-    },{
+    }, {
       test: /\.js$/,
       exclude: /node_modules/,
       use: 'babel-loader'
     }, {
-      test: /\.css$/,
       test: /\.s?[ac]ss$/,
       exclude: /node_modules/,
       use: [
@@ -51,6 +50,16 @@ module.exports = {
         'css-loader',
         'sass-loader'
       ]
+    }, {
+      type: 'javascript/auto',
+      test: /\.json$/,
+      exclude: /node_modules/,
+      use: [{
+        loader: 'file-loader',
+        options: {
+          name: '[name].[ext]'
+        }
+      }]
     }]
   }
 };
