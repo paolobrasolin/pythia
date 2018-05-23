@@ -1,18 +1,17 @@
 module.exports = {
   extends: ["eslint:recommended"],
   env: {
-    es6: true
+    es6: true,
+    browser: true
   },
   parserOptions: {
     ecmaVersion: 6,
     sourceType: "module"
   },
-  globals: {
-    document: true,
-    console: true
-  },
+  // globals: {
+  // },
   rules: {
-    "no-console": 1
+    "no-console": 0 // TODO: remove once stabler
   },
   overrides: [
     {
