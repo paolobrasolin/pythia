@@ -1,4 +1,8 @@
 const queries = {
+  fetchDependencies: `
+    MATCH (c1:Class) -[d:DEPENDS]-> (c2:Class)
+    RETURN *
+  `.trim(),
   deleteDependencies: `
     MATCH (:Class) -[d:DEPENDS]-> (:Class) DELETE d;
   `.trim(),
@@ -71,14 +75,14 @@ export default class Neo4jClient {
     return this.send(endpoint, "POST", data);
   }
 
-  tally(response) {
-    // Assumption: single query
+  flatten(response) {
     let data = response.results[0].data;
     let nodes = [],
       links = [];
+
     for (let i = 0; i < data.length; i++) {
-      nodes = this.concatById(nodes, data[i].graph.nodes);
-      links = this.concatById(links, data[i].graph.relationships);
+      nodes = this.concatUniqueById(nodes, data[i].graph.nodes);
+      links = this.concatUniqueById(links, data[i].graph.relationships);
     }
 
     for (let i = 0; i < links.length; i++) {
@@ -96,12 +100,18 @@ export default class Neo4jClient {
     delete Object.assign(object, { [newName]: object[oldName] })[oldName];
   }
 
-  concatById(target, source) {
+  concatUniqueById(target, source) {
     return target.concat(
       source.filter(candidate => {
         return target.findIndex(item => item.id === candidate.id) < 0;
       })
     );
+  }
+
+  fetchDependencies() {
+    return this.commit(queries.fetchDependencies).then(result => {
+      return this.flatten(result);
+    });
   }
 
   refreshDB() {

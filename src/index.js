@@ -4,11 +4,11 @@ import "./index.sass";
 import * as d3 from "d3";
 // import 'd3-interpolate';
 
-// import Neo4jClient from './neo4j_client';
-// window.neo4jClient = new Neo4jClient('http://localhost:7474', 'neo4j', 'neo');
+import Neo4jClient from "./neo4j_client";
+const neo4jClient = new Neo4jClient("http://localhost:7474", "neo4j", "neo");
 
-var width = 900,
-  height = 900;
+var width = 1000,
+  height = 1000;
 
 var svg = d3
   .select("body")
@@ -29,7 +29,9 @@ var simulation = d3
   .force("charge", d3.forceManyBody())
   .force("center", d3.forceCenter(width / 2, height / 2));
 
-d3.json("miserables.json").then(function(graph) {
+// d3.json("miserables.json").then(function(graph) {
+neo4jClient.fetchDependencies().then(function(graph) {
+  console.log(graph);
   var link = svg
     .append("g")
     .attr("class", "links")
@@ -65,7 +67,6 @@ d3.json("miserables.json").then(function(graph) {
   });
 
   simulation.nodes(graph.nodes).on("tick", ticked);
-
   simulation.force("link").links(graph.links);
 
   function ticked() {

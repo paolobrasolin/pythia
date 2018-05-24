@@ -1,0 +1,155 @@
+{
+  "results": [
+    {
+      "columns": [
+        "c1",
+        "c2",
+        "d"
+      ],
+      "data": [
+        {
+          "graph": {
+            "nodes": [
+              {
+                "id": "0",
+                "labels": [
+                  "Class"
+                ],
+                "properties": {
+                  "a_count": 1124,
+                  "e_force": 36,
+                  "a_force": 3620,
+                  "name": "Bundler",
+                  "i_force": 0.009846827133479213,
+                  "i_count": 0.01056338028169014,
+                  "e_count": 12
+                }
+              },
+              {
+                "id": "1654",
+                "labels": [
+                  "Class"
+                ],
+                "properties": {
+                  "a_count": 0,
+                  "e_force": 3,
+                  "a_force": 0,
+                  "name": "RSpec::ExampleGroups::BundleInstallWithSpecificPlatformEnabled::WhenOnADarwinMachine",
+                  "i_force": 1,
+                  "i_count": 1,
+                  "e_count": 1
+                }
+              }
+            ],
+            "relationships": [
+              {
+                "id": "189535",
+                "type": "DEPENDS",
+                "startNode": "1654",
+                "endNode": "0",
+                "properties": {
+                  "force": 3
+                }
+              }
+            ]
+          }
+        },
+        {
+          "graph": {
+            "nodes": [
+              {
+                "id": "0",
+                "labels": [
+                  "Class"
+                ],
+                "properties": {
+                  "a_count": 1124,
+                  "e_force": 36,
+                  "a_force": 3620,
+                  "name": "Bundler",
+                  "i_force": 0.009846827133479213,
+                  "i_count": 0.01056338028169014,
+                  "e_count": 12
+                }
+              },
+              {
+                "id": "8426",
+                "labels": [
+                  "Class"
+                ],
+                "properties": {
+                  "a_count": 0,
+                  "e_force": 3,
+                  "a_force": 0,
+                  "name": "RSpec::ExampleGroups::BundlerSource::Include::WhenThePassedSourceIsNotEquivalent",
+                  "i_force": 1,
+                  "i_count": 1,
+                  "e_count": 1
+                }
+              }
+            ],
+            "relationships": [
+              {
+                "id": "189532",
+                "type": "DEPENDS",
+                "startNode": "8426",
+                "endNode": "0",
+                "properties": {
+                  "force": 3
+                }
+              }
+            ]
+          }
+        },
+        {
+          "graph": {
+            "nodes": [
+              {
+                "id": "0",
+                "labels": [
+                  "Class"
+                ],
+                "properties": {
+                  "a_count": 1124,
+                  "e_force": 36,
+                  "a_force": 3620,
+                  "name": "Bundler",
+                  "i_force": 0.009846827133479213,
+                  "i_count": 0.01056338028169014,
+                  "e_count": 12
+                }
+              },
+              {
+                "id": "11165",
+                "labels": [
+                  "Class"
+                ],
+                "properties": {
+                  "a_count": 0,
+                  "e_force": 4,
+                  "a_force": 0,
+                  "name": "RSpec::ExampleGroups::BundlerGemHelper::GemManagement::Install::DefinesRakeTasks::BeforeInstallation",
+                  "i_force": 1,
+                  "i_count": 1,
+                  "e_count": 2
+                }
+              }
+            ],
+            "relationships": [
+              {
+                "id": "189533",
+                "type": "DEPENDS",
+                "startNode": "11165",
+                "endNode": "0",
+                "properties": {
+                  "force": 3
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "errors": []
+}
