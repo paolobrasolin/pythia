@@ -29,6 +29,35 @@ const queries = {
       (CASE WHEN c.e_count = 0 THEN 0.0 ELSE toFloat(c.e_count)/(c.e_count + c.a_count) END) as i_count,
       (CASE WHEN c.e_force = 0 THEN 0.0 ELSE toFloat(c.e_force)/(c.e_force + c.a_force) END) as i_force
     SET c.i_count = i_count, c.i_force = i_force
+  `.trim(),
+  deleteNameSpaceNodes: `
+    MATCH (n:NameSpace) DELETE n
+  `.trim(),
+  createNameSpaceNodes: `
+    MATCH (n:Class)
+    WITH n, split(n.name, "::") as frags
+    FOREACH (n IN range(0, size(frags)) |
+      MERGE (:NameSpace {name: REDUCE (scope = "", n IN frags[0..n] | scope + "::" + n)}) )
+  `.trim(),
+  createIndexNamespaces: `
+    CREATE INDEX ON :NameSpace(name)
+  `.trim(),
+  dropIndexNamespaces: `
+    DROP INDEX ON :NameSpace(name)
+  `.trim(),
+  deleteHolds: `
+  `.trim(),
+  createHolds: `
+  `.trim(),
+  deleteIncludesRelations: `
+    MATCH (:NameSpace) -[r:INCLUDES]-> (:NameSpace) DELETE r
+  `.trim(),
+  createIncludesRelations: `
+    MATCH (n:NameSpace)
+    WITH n, split(n.name, "::") as frags
+    WITH n, REDUCE (scope = "", n IN frags[1..-1] | scope + "::" + n) as parent_name
+    MATCH (m:NameSpace {name: parent_name})
+    MERGE (m) -[:INCLUDES]-> (n)
   `.trim()
 };
 
@@ -54,24 +83,29 @@ export default class Neo4jClient {
       // mode: 'cors', // no-cors, cors, *same-origin
       // redirect: 'follow', // manual, *follow, error
       // referrer: 'no-referrer', // *client, no-referrer
-    }).then(response => {
-      return new Promise(resolve => {
-        resolve(response.json());
+    })
+      .then(response => {
+        return response.json();
+      })
+      .then(response => {
+        console.log(response);
+        return new Promise(resolve => {
+          resolve(response);
+        });
       });
-    });
   }
 
-  commit(cypher) {
+  commit(cyphers) {
     const endpoint = "/db/data/transaction/commit";
-    const data = {
-      statements: [
-        {
-          statement: cypher,
-          resultDataContents: ["graph"],
-          includeStats: false
-        }
-      ]
-    };
+    console.log(cyphers);
+    const statements = cyphers.map(cypher => {
+      return {
+        statement: cypher,
+        resultDataContents: ["graph"],
+        includeStats: true
+      };
+    });
+    const data = { statements: statements };
     return this.send(endpoint, "POST", data);
   }
 
@@ -109,20 +143,32 @@ export default class Neo4jClient {
   }
 
   fetchDependencies() {
-    return this.commit(queries.fetchDependencies).then(result => {
+    return this.commit([queries.fetchDependencies]).then(result => {
       return this.flatten(result);
     });
   }
 
-  refreshDB() {
-    Promise.resolve()
-      .then(this.commit(queries.deleteDependencies))
-      .then(this.commit(queries.createDependencies))
-      .then(this.commit(queries.updateAfferent))
-      .then(this.commit(queries.updateEfferent))
-      .then(this.commit(queries.updateNodes))
-      .then(() => {
-        console.log("Done!");
-      });
+  refreshDependencies() {
+    this.commit([
+      queries.deleteDependencies,
+      queries.createDependencies,
+      queries.updateAfferent,
+      queries.updateEfferent,
+      queries.updateNodes
+    ]);
+  }
+
+  createNamespacing() {
+    this.commit([
+      queries.createNameSpaceNodes,
+      queries.createIncludesRelations
+    ]);
+  }
+
+  deleteNamespacing() {
+    this.commit([
+      queries.deleteIncludesRelations,
+      queries.deleteNameSpaceNodes
+    ]);
   }
 }

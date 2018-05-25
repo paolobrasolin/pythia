@@ -7,6 +7,8 @@ import * as d3 from "d3";
 import Neo4jClient from "./neo4j_client";
 const neo4jClient = new Neo4jClient("http://localhost:7474", "neo4j", "neo");
 
+window.neo4jClient = neo4jClient;
+
 var width = 1000,
   height = 1000;
 
