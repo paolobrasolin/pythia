@@ -1,4 +1,12 @@
 const queries = {
+  fetchHolds: `
+    MATCH (c1:Class) -[d:HOLDS]-> (c2:NameSpace)
+    RETURN *
+  `.trim(),
+  fetchNamespaces: `
+    MATCH (c1:NameSpace) -[d:INCLUDES]-> (c2:NameSpace)
+    RETURN *
+  `.trim(),
   fetchDependencies: `
     MATCH (c1:Class) -[d:DEPENDS]-> (c2:Class)
     RETURN *
@@ -45,9 +53,13 @@ const queries = {
   dropIndexNamespaces: `
     DROP INDEX ON :NameSpace(name)
   `.trim(),
-  deleteHolds: `
+  deleteHoldsRelations: `
+    MATCH (:Class) -[r:HOLDS]-> (:NameSpace) DELETE r
   `.trim(),
-  createHolds: `
+  createHoldsRelations: `
+    MATCH (ns:NameSpace), (c:Class)
+    WHERE ns.name = "::" + c.name
+    MERGE (c) -[:HOLDS]-> (ns)
   `.trim(),
   deleteIncludesRelations: `
     MATCH (:NameSpace) -[r:INCLUDES]-> (:NameSpace) DELETE r
@@ -57,6 +69,7 @@ const queries = {
     WITH n, split(n.name, "::") as frags
     WITH n, REDUCE (scope = "", n IN frags[1..-1] | scope + "::" + n) as parent_name
     MATCH (m:NameSpace {name: parent_name})
+    WHERE n <> m
     MERGE (m) -[:INCLUDES]-> (n)
   `.trim()
 };
@@ -88,7 +101,7 @@ export default class Neo4jClient {
         return response.json();
       })
       .then(response => {
-        console.log(response);
+        // console.log(response);
         return new Promise(resolve => {
           resolve(response);
         });
@@ -97,7 +110,7 @@ export default class Neo4jClient {
 
   commit(cyphers) {
     const endpoint = "/db/data/transaction/commit";
-    console.log(cyphers);
+    // console.log(cyphers);
     const statements = cyphers.map(cypher => {
       return {
         statement: cypher,
@@ -110,13 +123,16 @@ export default class Neo4jClient {
   }
 
   flatten(response) {
-    let data = response.results[0].data;
     let nodes = [],
       links = [];
 
-    for (let i = 0; i < data.length; i++) {
-      nodes = this.concatUniqueById(nodes, data[i].graph.nodes);
-      links = this.concatUniqueById(links, data[i].graph.relationships);
+    for (let j = 0; j < response.results.length; j++) {
+      let data = response.results[j].data;
+
+      for (let i = 0; i < data.length; i++) {
+        nodes = this.concatUniqueById(nodes, data[i].graph.nodes);
+        links = this.concatUniqueById(links, data[i].graph.relationships);
+      }
     }
 
     for (let i = 0; i < links.length; i++) {
@@ -142,8 +158,24 @@ export default class Neo4jClient {
     );
   }
 
+  fetchData() {
+    return this.commit([
+      queries.fetchDependencies,
+      queries.fetchNamespaces,
+      queries.fetchHolds
+    ]).then(result => {
+      return this.flatten(result);
+    });
+  }
+
   fetchDependencies() {
     return this.commit([queries.fetchDependencies]).then(result => {
+      return this.flatten(result);
+    });
+  }
+
+  fetchNamespaces() {
+    return this.commit([queries.fetchNamespaces]).then(result => {
       return this.flatten(result);
     });
   }
@@ -161,12 +193,14 @@ export default class Neo4jClient {
   createNamespacing() {
     this.commit([
       queries.createNameSpaceNodes,
-      queries.createIncludesRelations
+      queries.createIncludesRelations,
+      queries.createHoldsRelations
     ]);
   }
 
   deleteNamespacing() {
     this.commit([
+      queries.deleteHoldsRelations,
       queries.deleteIncludesRelations,
       queries.deleteNameSpaceNodes
     ]);
