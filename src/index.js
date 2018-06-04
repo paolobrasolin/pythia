@@ -18,7 +18,7 @@ var svg = d3
   .attr("width", width)
   .attr("height", height);
 
-var staturBar = d3
+var statusBar = d3
   .select("body")
   .append("span")
   .attr("class", "status-bar")
@@ -277,6 +277,7 @@ function mouseover(d) {
   // console.log("OVER");
   d.fx = d.x;
   d.fy = d.y;
+  statusBar.html(d.properties.name);
 }
 
 function mouseout(d) {
@@ -286,6 +287,7 @@ function mouseout(d) {
     d.fx = null;
     d.fy = null;
   }
+  statusBar.html("");
 }
 
 function dragstarted(d) {
