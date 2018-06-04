@@ -9,19 +9,32 @@ const neo4jClient = new Neo4jClient("http://localhost:7474", "neo4j", "neo");
 
 window.neo4jClient = neo4jClient;
 
-var width = 1000,
-  height = 1000;
+var width = 600,
+  height = 600;
 
-var svg = d3
+var svgContainer = d3
   .select("body")
-  .append("svg")
-  .attr("width", width)
-  .attr("height", height);
+  .append("div")
+  .attr("id", "svg-container");
+
+var svg = svgContainer.append("svg");
+
+function redraw() {
+  var container = document.getElementById("svg-container");
+  svg
+    .attr("width", container.clientWidth)
+    .attr("height", container.clientHeight)
+    .attr("viewBox", `${-container.clientWidth/2} ${-container.clientHeight/2} ${container.clientWidth} ${container.clientHeight}`);
+}
+
+window.addEventListener("resize", redraw);
+
+redraw();
 
 var statusBar = d3
   .select("body")
   .append("span")
-  .attr("class", "status-bar")
+  .attr("id", "status-bar")
   .html("This is Pythia.");
 
 var colorPalette = d3.scaleOrdinal(d3.schemeCategory10);
@@ -150,7 +163,7 @@ simulation = d3
     // .distance(150)
   )
   .force("charge", d3.forceManyBody())
-  .force("center", d3.forceCenter(width / 2, height / 2))
+  .force("center", d3.forceCenter(0, 0))
   .force("radius", d3.forceCollide(15));
 
 function init(data) {
