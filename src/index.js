@@ -1,16 +1,17 @@
 import "./miserables.json";
 import "./index.sass";
 
+import Utils from "./utils";
+
 import * as d3 from "d3";
 // import 'd3-interpolate';
 
 import Neo4jClient from "./neo4j_client";
 const neo4jClient = new Neo4jClient("http://localhost:7474", "neo4j", "neo");
 
-window.neo4jClient = neo4jClient;
+import Graph from "./graph";
 
-var width = 600,
-  height = 600;
+window.neo4jClient = neo4jClient;
 
 var svgContainer = d3
   .select("body")
@@ -24,7 +25,12 @@ function redraw() {
   svg
     .attr("width", container.clientWidth)
     .attr("height", container.clientHeight)
-    .attr("viewBox", `${-container.clientWidth/2} ${-container.clientHeight/2} ${container.clientWidth} ${container.clientHeight}`);
+    .attr(
+      "viewBox",
+      `${-container.clientWidth / 2} ${-container.clientHeight / 2} ${
+        container.clientWidth
+      } ${container.clientHeight}`
+    );
 }
 
 window.addEventListener("resize", redraw);
@@ -45,16 +51,6 @@ function drawHullCurve(d) {
   return hullCurve(d.path); // 0.8
 }
 
-function offsetPairsArray(array, offset) {
-  var offsetPairs = array.map(pair => [
-    [pair[0] + offset, pair[1] + offset],
-    [pair[0] - offset, pair[1] + offset],
-    [pair[0] - offset, pair[1] - offset],
-    [pair[0] + offset, pair[1] - offset]
-  ]);
-  return [].concat(...offsetPairs);
-}
-
 function refreshHulls(namespace) {
   namespace.hull = [[namespace.x || 0, namespace.y || 0]];
   if (namespace.expand) {
@@ -62,7 +58,7 @@ function refreshHulls(namespace) {
     namespace.hull = namespace.hull.concat(
       ...namespace.includes.map(ns => ns.hull)
     );
-    namespace.hull = offsetPairsArray(namespace.hull, 20);
+    namespace.hull = Utils.offsetPairs(namespace.hull, 20);
     namespace.hull = d3.polygonHull(namespace.hull);
   }
 }
@@ -78,9 +74,9 @@ function convexHulls(nodes) {
   });
 }
 
-function transverse(namespace) {
-  var subnamespaces = namespace.expand ? namespace.includes : [];
-  return [namespace].concat(...subnamespaces.map(transverse));
+function listExpandedNamespaces(namespace) {
+  var children = namespace.expand ? namespace.includes : [];
+  return [namespace].concat(...children.map(listExpandedNamespaces));
 }
 
 function sliceNetwork(graph) {
@@ -89,7 +85,7 @@ function sliceNetwork(graph) {
 
   const rootNamespace = namespaces.find(node => node.properties.name === "");
 
-  var ns = transverse(rootNamespace);
+  var ns = listExpandedNamespaces(rootNamespace);
 
   // var cs = ns
   //   .map(namespace => namespace.holder)
@@ -163,7 +159,7 @@ simulation = d3
     // .distance(150)
   )
   .force("charge", d3.forceManyBody())
-  .force("center", d3.forceCenter(0, 0))
+  // .force("center", d3.forceCenter(0, 0))
   .force("radius", d3.forceCollide(15));
 
 function init(data) {
@@ -236,54 +232,12 @@ function init(data) {
   simulation.restart();
 }
 
-neo4jClient.fetchData().then(function(graph) {
-  denormalizeNetwork(graph);
-  init(graph);
+neo4jClient.fetchData().then(function(data) {
+  graph = new Graph(data);
+  graph.denormalize();
+  init(graph.data);
+  console.log(graph.data);
 });
-
-function denormalizeNetwork(graph) {
-  var k;
-
-  for (k = 0; k < graph.links.length; ++k) {
-    graph.links[k].source = graph.nodes.find(
-      node => node.id === graph.links[k].source
-    );
-    graph.links[k].target = graph.nodes.find(
-      node => node.id === graph.links[k].target
-    );
-  }
-
-  var namespaces = graph.nodes.filter(node => node.labels[0] === "NameSpace");
-  var includes = graph.links.filter(link => link.type === "INCLUDES");
-
-  for (k = 0; k < namespaces.length; ++k) {
-    namespaces[k].includes = [];
-    namespaces[k].included = null;
-  }
-
-  var holds = graph.links.filter(link => link.type === "HOLDS");
-
-  for (k = 0; k < holds.length; ++k) {
-    holds[k].source.held = holds[k].target;
-    holds[k].target.holder = holds[k].source;
-  }
-
-  for (k = 0; k < includes.length; ++k) {
-    includes[k].source.includes.push(includes[k].target);
-    includes[k].target.included = includes[k].source;
-  }
-
-  for (k = 0; k < graph.nodes.length; ++k) {
-    graph.nodes[k].sourceOf = [];
-    graph.nodes[k].targetOf = [];
-  }
-
-  for (k = 0; k < graph.links.length; ++k) {
-    link = graph.links[k];
-    link.source.sourceOf.push(link);
-    link.target.targetOf.push(link);
-  }
-}
 
 function mouseover(d) {
   d.hovered = true;
